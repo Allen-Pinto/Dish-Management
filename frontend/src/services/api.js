@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'https://dish-management-1.onrender.com/api';
 
 export async function fetchDishes() {
   const response = await fetch(`${API_BASE}/dishes`);

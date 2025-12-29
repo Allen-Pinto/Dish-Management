@@ -9,7 +9,7 @@ class WebSocketService {
   }
 
   connect() {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://dish-management-1.onrender.com';
     const wsUrl = backendUrl.replace('http', 'ws');
     
     this.socket = new WebSocket(wsUrl);
