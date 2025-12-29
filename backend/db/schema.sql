@@ -1,0 +1,11 @@
+CREATE DATABSE IF NOT EXISTS dish_manager
+USE dish_manager
+
+CREATE TABLE dishes (
+    dishId INT PRIMARY KEY AUTO_INCREMENT,
+    dishName VARCHAR(255) NOT NULL,
+    imageUrl VARCHAR(500),
+    isPublished BOOLEAN DEFAULT FALSE
+);
+
+ALTER TABLE dishes AUTO_INCREMENT = 1001;
