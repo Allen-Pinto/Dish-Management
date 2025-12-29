@@ -7,8 +7,11 @@ export async function fetchDishes() {
 }
 
 export async function toggleDishStatus(dishId) {
-  const response = await fetch(`${API_BASE}/dishes/${dishId}/toggle-publish`, {
-    method: 'PUT'
+  const response = await fetch(`${API_BASE}/dishes/${dishId}/toggle`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
   if (!response.ok) throw new Error('Failed to toggle dish status');
   return response.json();

@@ -1,31 +1,70 @@
-const WS_URL = 'ws://localhost:3001';
+class WebSocketService {
+  constructor() {
+    this.socket = null;
+    this.callbacks = {
+      onDishUpdated: null,
+      onConnected: null,
+      onDisconnected: null
+    };
+  }
 
-export function connectWebSocket(onDishUpdate, onError) {
-  const ws = new WebSocket(WS_URL);
-  
-  ws.onopen = () => {
-    console.log('WebSocket connected');
-  };
-  
-  ws.onmessage = (event) => {
-    try {
-      const message = JSON.parse(event.data);
-      if (message.type === 'dish_updated') {
-        onDishUpdate(message.data);
+  connect() {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    const wsUrl = backendUrl.replace('http', 'ws');
+    
+    this.socket = new WebSocket(wsUrl);
+    
+    this.socket.onopen = () => {
+      console.log('WebSocket connected');
+      if (this.callbacks.onConnected) {
+        this.callbacks.onConnected();
       }
-    } catch (error) {
-      console.error('WebSocket message parse error:', error);
+    };
+
+    this.socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === 'dish-updated' && this.callbacks.onDishUpdated) {
+        this.callbacks.onDishUpdated(data.dish);
+      }
+    };
+
+    this.socket.onclose = () => {
+      console.log('WebSocket disconnected');
+      if (this.callbacks.onDisconnected) {
+        this.callbacks.onDisconnected();
+      }
+      
+      // Try to reconnect after 5 seconds
+      setTimeout(() => {
+        console.log('Attempting to reconnect WebSocket...');
+        this.connect();
+      }, 5000);
+    };
+
+    this.socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
     }
-  };
-  
-  ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-    onError?.(error);
-  };
-  
-  ws.onclose = () => {
-    console.log('WebSocket disconnected');
-  };
-  
-  return ws;
+  }
+
+  onDishUpdated(callback) {
+    this.callbacks.onDishUpdated = callback;
+  }
+
+  onConnected(callback) {
+    this.callbacks.onConnected = callback;
+  }
+
+  onDisconnected(callback) {
+    this.callbacks.onDisconnected = callback;
+  }
 }
+
+export default new WebSocketService();

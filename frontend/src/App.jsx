@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchDishes, toggleDishStatus } from './services/api';
-import { connectWebSocket } from './services/websocket';
+import websocketService from './services/websocket';
 import Header from './components/Header';
 import DishList from './components/DishList';
 import './styles/App.css';
@@ -22,9 +22,9 @@ const DishManagerApp = () => {
     );
   }, []);
 
-  const handleWebSocketUpdate = useCallback((data) => {
-    console.log('Real-time update received:', data);
-    updateDishInState(data);
+  const handleWebSocketUpdate = useCallback((updatedDish) => {
+    console.log('Real-time update received:', updatedDish);
+    updateDishInState(updatedDish);
   }, [updateDishInState]);
 
   const handleToggleDish = async (dishId) => {
@@ -60,17 +60,23 @@ const DishManagerApp = () => {
   }, []);
 
   useEffect(() => {
-    const ws = connectWebSocket(
-      handleWebSocketUpdate,
-      () => setIsWebSocketConnected(false)
-    );
+    // Set up WebSocket callbacks
+    websocketService.onDishUpdated(handleWebSocketUpdate);
+    websocketService.onConnected(() => {
+      console.log('WebSocket connected');
+      setIsWebSocketConnected(true);
+    });
+    websocketService.onDisconnected(() => {
+      console.log('WebSocket disconnected');
+      setIsWebSocketConnected(false);
+    });
 
-    ws.onopen = () => setIsWebSocketConnected(true);
+    // Connect WebSocket
+    websocketService.connect();
 
+    // Cleanup on unmount
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
+      websocketService.disconnect();
     };
   }, [handleWebSocketUpdate]);
 
@@ -95,6 +101,10 @@ const DishManagerApp = () => {
           <div className="loading-state">
             <div className="spinner"></div>
             <p>Loading dishes...</p>
+          </div>
+        ) : dishes.length === 0 ? (
+          <div className="empty-state">
+            <p>No dishes found. Please check your backend connection.</p>
           </div>
         ) : (
           <DishList 
